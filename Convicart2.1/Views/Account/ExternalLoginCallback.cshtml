@@ -1,0 +1,15 @@
+﻿@model ConviBLL.ViewModels.ExternalLoginViewModel
+@{
+    ViewData["Title"] = "External Login Confirmation";
+}
+
+<h2>External Login Confirmation</h2>
+
+<form asp-action="ExternalLoginCallback" method="post">
+    <div>
+        <label asp-for="Email"></label>
+        <input asp-for="Email" />
+        <span asp-validation-for="Email"></span>
+    </div>
+    <button type="submit">Confirm</button>
+</form>
