@@ -17,6 +17,10 @@ namespace ConviBLL.Interfaces
         Task<ExternalLoginInfo> GetExternalLoginInfoAsync();
         Task<SignInResult> ExternalLoginSignInAsync(ExternalLoginInfo info); // Corrected to SignInResult
         AuthenticationProperties ConfigureExternalAuthenticationProperties(string provider, string redirectUrl);
+        Task<bool> UserExistsAsync(string email);
+        Task<IdentityResult> RegisterExternalUserAsync(ExternalLoginInfo info);
+
+
     }
 
 }

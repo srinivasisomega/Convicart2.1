@@ -45,17 +45,49 @@ namespace Convicart2._1.Controllers
             return View(model);
         }
 
+        
         [HttpGet("external-login-callback")]
         public async Task<IActionResult> ExternalLoginCallback()
         {
             var info = await _accountService.GetExternalLoginInfoAsync();
             if (info == null) return RedirectToAction("Login");
 
+            // Try to sign in the user with the external login provider.
             var result = await _accountService.ExternalLoginSignInAsync(info);
-            if (result.Succeeded) return RedirectToAction("Index", "Home");
+            if (result.Succeeded)
+                return RedirectToAction("Index", "Home");
 
-            return View("ExternalLoginCallback", new ExternalLoginViewModel { Email = info.Principal.FindFirstValue(ClaimTypes.Email) });
+            // If the user does not have an account, create one.
+            var email = info.Principal.FindFirstValue(ClaimTypes.Email);
+            if (email != null)
+            {
+                var userExists = await _accountService.UserExistsAsync(email);
+                if (!userExists)
+                {
+                    // Register the user
+                    var registrationResult = await _accountService.RegisterExternalUserAsync(info);
+                    if (registrationResult.Succeeded)
+                    {
+                        // Log in the new user
+                        await _accountService.ExternalLoginSignInAsync(info);
+                        return RedirectToAction("Index", "Home");
+                    }
+
+                    // If there were errors during registration, add them to ModelState
+                    foreach (var error in registrationResult.Errors)
+                    {
+                        ModelState.AddModelError("", error.Description);
+                    }
+                }
+            }
+            else
+            {
+                ModelState.AddModelError("", "Email claim not received from external login provider.");
+            }
+
+            return View("ExternalLoginCallback", new ExternalLoginViewModel { Email = email });
         }
+
 
         [HttpPost("logout")]
         public async Task<IActionResult> Logout()

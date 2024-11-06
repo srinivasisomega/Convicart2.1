@@ -65,6 +65,37 @@ namespace ConviBLL.Services
         {
             return _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
         }
+        public async Task<bool> UserExistsAsync(string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            return user != null;
+        }
+
+        public async Task<IdentityResult> RegisterExternalUserAsync(ExternalLoginInfo info)
+        {
+            // Get email and other details from the external login provider
+            var email = info.Principal.FindFirstValue(ClaimTypes.Email);
+
+            // Create a new user instance with the information from the external provider
+            var user = new Customer
+            {
+                UserName = email,
+                Email = email,
+                // Populate other properties if available from the provider
+                FirstName = info.Principal.FindFirstValue(ClaimTypes.GivenName),
+                LastName = info.Principal.FindFirstValue(ClaimTypes.Surname)
+            };
+
+            var result = await _userManager.CreateAsync(user);
+            if (result.Succeeded)
+            {
+                // Link this user with the external login provider
+                result = await _userManager.AddLoginAsync(user, info);
+            }
+
+            return result;
+        }
+
     }
 
 }
